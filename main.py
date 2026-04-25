@@ -1,13 +1,4 @@
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Query
-from fastapi import HTTPException, Query, Depends
-from sqlalchemy.orm import Session
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from database import engine, SessionLocal
-from models import Base
-from schemas import UserCreate, UserLogin, PostCreate, ClaimCreate
-from crud import (from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Query
 from sqlalchemy.orm import Session
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,7 +20,6 @@ from crud import (
 import os
 import shutil
 import uuid
-
 
 app = FastAPI()
 
