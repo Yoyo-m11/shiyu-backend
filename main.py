@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Query
+from fastapi import FastAPI, UploadFile, File, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
@@ -297,14 +297,6 @@ def items_recommend():
     return get_all_items()
 
 
-@app.get("/items/{item_id}")
-def get_item_detail(item_id: int):
-    item = get_item_by_id(item_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="未找到物品")
-    return item
-
-
 @app.get("/items/match")
 def items_match(itemId: int, sort_by: str = Query(default="similarity")):
     if int(itemId) == 1:
@@ -317,6 +309,14 @@ def items_match(itemId: int, sort_by: str = Query(default="similarity")):
         return [DEFAULT_ITEMS[10], DEFAULT_ITEMS[11], DEFAULT_ITEMS[12]]
 
     return [DEFAULT_ITEMS[1], DEFAULT_ITEMS[2], DEFAULT_ITEMS[3], DEFAULT_ITEMS[4]]
+
+
+@app.get("/items/{item_id}")
+def get_item_detail(item_id: int):
+    item = get_item_by_id(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="未找到物品")
+    return item
 
 
 @app.post("/items/publish")
@@ -387,20 +387,20 @@ def list_posts(
     )
 
 
-@app.get("/posts/{post_id}")
-def get_post_detail(post_id: int):
-    item = get_item_by_id(post_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="帖子不存在")
-    return item
-
-
 @app.get("/posts/match")
 def get_post_match(post_id: int, sort_by: str = Query(default="similarity")):
     return {
         "data": items_match(post_id, sort_by),
         "total": len(items_match(post_id, sort_by))
     }
+
+
+@app.get("/posts/{post_id}")
+def get_post_detail(post_id: int):
+    item = get_item_by_id(post_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="帖子不存在")
+    return item
 
 
 @app.get("/user/items")
