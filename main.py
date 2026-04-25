@@ -1,25 +1,10 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Query
-from sqlalchemy.orm import Session
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
-
-from database import engine, SessionLocal
-from models import Base
-from schemas import UserCreate, UserLogin, PostCreate, ClaimCreate
-from crud import (
-    create_user,
-    login_user,
-    create_post,
-    get_posts,
-    get_post_by_id,
-    get_match_posts,
-    get_posts_by_contact,
-    get_my_match_posts
-)
-
+from fastapi.staticfiles import StaticFiles
 import os
 import shutil
 import uuid
+
 
 app = FastAPI()
 
@@ -33,24 +18,13 @@ app.add_middleware(
 )
 
 
-Base.metadata.create_all(bind=engine)
-
-
 if not os.path.exists("uploads"):
     os.makedirs("uploads")
-
 
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
-# ================== 默认演示数据 ==================
-# 目的：
-# 1. 防止 Render 免费环境重启后数据库为空，导致评委打开页面空白
-# 2. 保证首页、详情页、匹配结果页始终有数据
-# 3. 覆盖三组演示场景：耳机、学生证、线性代数教材
-
 DEFAULT_ITEMS = [
-    # ================== 第一组：耳机 ==================
     {
         "id": 1,
         "name": "黑色蓝牙耳机丢失",
@@ -66,9 +40,7 @@ DEFAULT_ITEMS = [
         "match_summary": "该信息为寻物主帖，系统将根据名称、描述、地点、时间和类别进行匹配。",
         "image": "",
         "images": [],
-        "contact": "13800138000",
-        "created_at": "2026-04-16 10:30:00",
-        "updated_at": "2026-04-16 10:30:00"
+        "contact": "13800138000"
     },
     {
         "id": 2,
@@ -85,9 +57,7 @@ DEFAULT_ITEMS = [
         "match_summary": "该物品在名称、品牌、地点、时间和外观特征上均与原始信息高度一致，属于高匹配结果。",
         "image": "",
         "images": [],
-        "contact": "13900139000",
-        "created_at": "2026-04-16 11:00:00",
-        "updated_at": "2026-04-16 11:00:00"
+        "contact": "13900139000"
     },
     {
         "id": 3,
@@ -104,9 +74,7 @@ DEFAULT_ITEMS = [
         "match_summary": "该物品与原始信息在物品名称和类别上较为接近，地点范围相近，但品牌和细节特征不完全一致，属于中匹配结果。",
         "image": "",
         "images": [],
-        "contact": "13700137000",
-        "created_at": "2026-04-16 12:30:00",
-        "updated_at": "2026-04-16 12:30:00"
+        "contact": "13700137000"
     },
     {
         "id": 4,
@@ -123,9 +91,7 @@ DEFAULT_ITEMS = [
         "match_summary": "该物品与原始信息同属耳机类物品，但颜色、地点和时间存在明显差异，属于低匹配结果。",
         "image": "",
         "images": [],
-        "contact": "13600136000",
-        "created_at": "2026-04-17 09:00:00",
-        "updated_at": "2026-04-17 09:00:00"
+        "contact": "13600136000"
     },
     {
         "id": 5,
@@ -142,12 +108,8 @@ DEFAULT_ITEMS = [
         "match_summary": "该信息与耳机寻物信息类别和描述均不相关，作为干扰项用于展示系统区分能力。",
         "image": "",
         "images": [],
-        "contact": "13500135000",
-        "created_at": "2026-04-18 09:00:00",
-        "updated_at": "2026-04-18 09:00:00"
+        "contact": "13500135000"
     },
-
-    # ================== 第二组：学生证 ==================
     {
         "id": 6,
         "name": "学生证丢失",
@@ -163,9 +125,7 @@ DEFAULT_ITEMS = [
         "match_summary": "该信息为学生证寻物主帖，系统将根据证件类别、地点和时间进行匹配。",
         "image": "",
         "images": [],
-        "contact": "13900001111",
-        "created_at": "2026-04-18 09:00:00",
-        "updated_at": "2026-04-18 09:00:00"
+        "contact": "13900001111"
     },
     {
         "id": 7,
@@ -182,9 +142,7 @@ DEFAULT_ITEMS = [
         "match_summary": "该招领信息与学生证寻物信息在类别、地点和时间上高度一致，属于高匹配结果。",
         "image": "",
         "images": [],
-        "contact": "13900002222",
-        "created_at": "2026-04-18 09:20:00",
-        "updated_at": "2026-04-18 09:20:00"
+        "contact": "13900002222"
     },
     {
         "id": 8,
@@ -201,9 +159,7 @@ DEFAULT_ITEMS = [
         "match_summary": "该信息与学生证寻物信息类别一致，地点较为接近，但描述不够明确，属于中匹配结果。",
         "image": "",
         "images": [],
-        "contact": "13900003333",
-        "created_at": "2026-04-18 11:00:00",
-        "updated_at": "2026-04-18 11:00:00"
+        "contact": "13900003333"
     },
     {
         "id": 9,
@@ -220,12 +176,8 @@ DEFAULT_ITEMS = [
         "match_summary": "该信息与学生证同属证件类，但具体物品、时间和地点存在差异，属于低匹配结果。",
         "image": "",
         "images": [],
-        "contact": "13900004444",
-        "created_at": "2026-04-19 08:00:00",
-        "updated_at": "2026-04-19 08:00:00"
+        "contact": "13900004444"
     },
-
-    # ================== 第三组：线性代数教材 ==================
     {
         "id": 10,
         "name": "线性代数教材丢失",
@@ -241,9 +193,7 @@ DEFAULT_ITEMS = [
         "match_summary": "该信息为书籍类寻物主帖，系统将根据书名、地点、时间和描述特征进行匹配。",
         "image": "",
         "images": [],
-        "contact": "13688889999",
-        "created_at": "2026-04-17 20:00:00",
-        "updated_at": "2026-04-17 20:00:00"
+        "contact": "13688889999"
     },
     {
         "id": 11,
@@ -260,9 +210,7 @@ DEFAULT_ITEMS = [
         "match_summary": "该书籍与寻物信息在书名、封面特征、地点和时间上高度一致，属于高匹配结果。",
         "image": "",
         "images": [],
-        "contact": "13677778888",
-        "created_at": "2026-04-17 20:30:00",
-        "updated_at": "2026-04-17 20:30:00"
+        "contact": "13677778888"
     },
     {
         "id": 12,
@@ -279,9 +227,7 @@ DEFAULT_ITEMS = [
         "match_summary": "该书籍与线性代数教材在类别和地点上较为接近，但书名和细节描述不完全一致，属于中匹配结果。",
         "image": "",
         "images": [],
-        "contact": "13666667777",
-        "created_at": "2026-04-17 21:00:00",
-        "updated_at": "2026-04-17 21:00:00"
+        "contact": "13666667777"
     },
     {
         "id": 13,
@@ -298,119 +244,131 @@ DEFAULT_ITEMS = [
         "match_summary": "该物品同属书籍类，但书名、地点和描述差异较大，属于低匹配结果。",
         "image": "",
         "images": [],
-        "contact": "13655556666",
-        "created_at": "2026-04-18 09:00:00",
-        "updated_at": "2026-04-18 09:00:00"
+        "contact": "13655556666"
     }
 ]
 
 
-# ================== 工具函数 ==================
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+USER_POSTS = []
 
 
-def get_default_item_by_id(item_id: int):
-    for item in DEFAULT_ITEMS:
+def get_all_items():
+    return DEFAULT_ITEMS + USER_POSTS
+
+
+def get_item_by_id(item_id: int):
+    for item in get_all_items():
         if int(item["id"]) == int(item_id):
             return item
     return None
 
 
-def filter_default_items(
-    type: str = None,
-    category: str = None,
-    location: str = None,
-    keyword: str = None
-):
-    result = DEFAULT_ITEMS
+def filter_items(type=None, category=None, location=None, keyword=None):
+    items = get_all_items()
 
     if type:
-        result = [item for item in result if item.get("type") == type]
+        items = [item for item in items if item.get("type") == type]
 
     if category:
-        result = [item for item in result if item.get("category") == category]
+        items = [item for item in items if item.get("category") == category]
 
     if location:
-        result = [item for item in result if location in item.get("location", "")]
+        items = [item for item in items if location in item.get("location", "")]
 
     if keyword:
-        result = [
-            item for item in result
-            if keyword in item.get("title", "")
-            or keyword in item.get("name", "")
+        items = [
+            item for item in items
+            if keyword in item.get("name", "")
+            or keyword in item.get("title", "")
             or keyword in item.get("description", "")
             or keyword in item.get("location", "")
         ]
 
-    return result
+    return items
 
-
-def map_post_to_item(post_dict):
-    images = post_dict.get("images") or []
-    image = images[0] if images else ""
-
-    sim = post_dict.get("similarity", 0)
-    similarity = int(sim * 100) if sim <= 1 else int(sim)
-
-    type_val = post_dict.get("type")
-    status = "招领" if type_val == "found" else "寻物"
-
-    return {
-        "id": str(post_dict.get("id")),
-        "name": post_dict.get("title"),
-        "title": post_dict.get("title"),
-        "type": type_val,
-        "status": status,
-        "category": post_dict.get("category"),
-        "time": post_dict.get("time"),
-        "location": post_dict.get("location"),
-        "description": post_dict.get("description"),
-        "similarity": similarity,
-        "match_reason": post_dict.get("match_reason", []),
-        "match_summary": post_dict.get("match_summary", ""),
-        "image": image,
-        "images": images,
-        "contact": post_dict.get("contact"),
-        "created_at": post_dict.get("created_at", ""),
-        "updated_at": post_dict.get("updated_at", "")
-    }
-
-
-# ================== 基础接口 ==================
 
 @app.get("/")
 def read_root():
     return {"message": "后端启动成功"}
 
 
-@app.post("/register")
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    return create_user(db, user)
+@app.get("/items/recommend")
+def items_recommend():
+    return get_all_items()
 
 
-@app.post("/login")
-def login(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = login_user(db, user)
-    if not db_user:
-        raise HTTPException(status_code=401, detail="用户名或密码错误")
-    return {
-        "message": "登录成功",
-        "user_id": db_user.id,
-        "username": db_user.username
+@app.get("/items/{item_id}")
+def get_item_detail(item_id: int):
+    item = get_item_by_id(item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="未找到物品")
+    return item
+
+
+@app.get("/items/match")
+def items_match(itemId: int, sort_by: str = Query(default="similarity")):
+    if int(itemId) == 1:
+        return [DEFAULT_ITEMS[1], DEFAULT_ITEMS[2], DEFAULT_ITEMS[3], DEFAULT_ITEMS[4]]
+
+    if int(itemId) == 6:
+        return [DEFAULT_ITEMS[6], DEFAULT_ITEMS[7], DEFAULT_ITEMS[8]]
+
+    if int(itemId) == 10:
+        return [DEFAULT_ITEMS[10], DEFAULT_ITEMS[11], DEFAULT_ITEMS[12]]
+
+    return [DEFAULT_ITEMS[1], DEFAULT_ITEMS[2], DEFAULT_ITEMS[3], DEFAULT_ITEMS[4]]
+
+
+@app.post("/items/publish")
+def publish_item(item: dict):
+    new_id = max([i["id"] for i in get_all_items()]) + 1
+
+    new_item = {
+        "id": new_id,
+        "name": item.get("name") or item.get("title") or "未命名物品",
+        "title": item.get("name") or item.get("title") or "未命名物品",
+        "type": item.get("type", "lost"),
+        "status": "招领" if item.get("type") == "found" else "寻物",
+        "category": item.get("category", "其他"),
+        "time": item.get("time", ""),
+        "location": item.get("location", ""),
+        "description": item.get("description", ""),
+        "similarity": 0,
+        "match_reason": [],
+        "match_summary": "用户新发布的信息，系统将根据物品类型、地点、时间和描述进行匹配。",
+        "image": "",
+        "images": item.get("images", []),
+        "contact": item.get("contact", "")
     }
 
+    USER_POSTS.append(new_item)
+    return new_item
 
-# ================== posts 接口 ==================
 
 @app.post("/posts")
-def add_post(post: PostCreate, db: Session = Depends(get_db)):
-    return create_post(db, post)
+def add_post(post: dict):
+    new_id = max([i["id"] for i in get_all_items()]) + 1
+
+    new_item = {
+        "id": new_id,
+        "name": post.get("name") or post.get("title") or "未命名物品",
+        "title": post.get("name") or post.get("title") or "未命名物品",
+        "type": post.get("type", "lost"),
+        "status": "招领" if post.get("type") == "found" else "寻物",
+        "category": post.get("category", "其他"),
+        "time": post.get("time", ""),
+        "location": post.get("location", ""),
+        "description": post.get("description", ""),
+        "similarity": 0,
+        "match_reason": [],
+        "match_summary": "用户新发布的信息，系统将根据物品类型、地点、时间和描述进行匹配。",
+        "image": "",
+        "images": post.get("images", []),
+        "contact": post.get("contact", "")
+    }
+
+    USER_POSTS.append(new_item)
+    return new_item
 
 
 @app.get("/posts")
@@ -419,10 +377,9 @@ def list_posts(
     category: str = Query(default=None),
     location: str = Query(default=None),
     time_range: str = Query(default=None),
-    keyword: str = Query(default=None),
-    db: Session = Depends(get_db)
+    keyword: str = Query(default=None)
 ):
-    return filter_default_items(
+    return filter_items(
         type=type,
         category=category,
         location=location,
@@ -430,165 +387,28 @@ def list_posts(
     )
 
 
-@app.get("/posts/match")
-def get_post_match(
-    post_id: int,
-    time_range: str = Query(default=None),
-    category: str = Query(default=None),
-    location: str = Query(default=None),
-    sort_by: str = Query(default="similarity"),
-    db: Session = Depends(get_db)
-):
-    if int(post_id) == 1:
-        return {
-            "data": [DEFAULT_ITEMS[1], DEFAULT_ITEMS[2], DEFAULT_ITEMS[3], DEFAULT_ITEMS[4]],
-            "total": 4
-        }
-
-    if int(post_id) == 6:
-        return {
-            "data": [DEFAULT_ITEMS[6], DEFAULT_ITEMS[7], DEFAULT_ITEMS[8]],
-            "total": 3
-        }
-
-    if int(post_id) == 10:
-        return {
-            "data": [DEFAULT_ITEMS[10], DEFAULT_ITEMS[11], DEFAULT_ITEMS[12]],
-            "total": 3
-        }
-
-    result = get_match_posts(
-        db=db,
-        post_id=post_id,
-        time_range=time_range,
-        category=category,
-        location=location,
-        sort_by=sort_by
-    )
-
-    if result is None:
-        return {
-            "data": [DEFAULT_ITEMS[1], DEFAULT_ITEMS[2], DEFAULT_ITEMS[3], DEFAULT_ITEMS[4]],
-            "total": 4
-        }
-
-    return result
-
-
-@app.get("/posts/my")
-def get_my_posts(contact: str, db: Session = Depends(get_db)):
-    default_my_items = [
-        item for item in DEFAULT_ITEMS
-        if item.get("contact") == contact
-    ]
-
-    return default_my_items
-
-
-@app.get("/posts/my/match")
-def get_my_matches(contact: str, db: Session = Depends(get_db)):
-    return get_my_match_posts(db, contact)
-
-
 @app.get("/posts/{post_id}")
-def get_post_detail(post_id: int, db: Session = Depends(get_db)):
-    default_item = get_default_item_by_id(post_id)
-    if default_item:
-        return default_item
-
-    post = get_post_by_id(db, post_id)
-    if not post:
+def get_post_detail(post_id: int):
+    item = get_item_by_id(post_id)
+    if not item:
         raise HTTPException(status_code=404, detail="帖子不存在")
-    return post
-
-
-# ================== items 接口 ==================
-
-@app.get("/items/recommend")
-def items_recommend():
-    return DEFAULT_ITEMS
-
-
-@app.post("/items/publish")
-def publish_item(item: dict, db: Session = Depends(get_db)):
-    data = PostCreate(
-        title=item.get("name"),
-        type=item.get("type"),
-        category=item.get("category"),
-        time=item.get("time"),
-        location=item.get("location"),
-        description=item.get("description"),
-        images=item.get("images", []),
-        contact=item.get("contact")
-    )
-
-    new_post = create_post(db, data)
-    return new_post
-
-
-@app.get("/items/match")
-def items_match(
-    itemId: int,
-    sort_by: str = Query(default="similarity")
-):
-    # 耳机匹配：高 / 中 / 低 / 干扰
-    if int(itemId) == 1:
-        return [
-            DEFAULT_ITEMS[1],
-            DEFAULT_ITEMS[2],
-            DEFAULT_ITEMS[3],
-            DEFAULT_ITEMS[4]
-        ]
-
-    # 学生证匹配：高 / 中 / 低
-    if int(itemId) == 6:
-        return [
-            DEFAULT_ITEMS[6],
-            DEFAULT_ITEMS[7],
-            DEFAULT_ITEMS[8]
-        ]
-
-    # 线性代数教材匹配：高 / 中 / 低
-    if int(itemId) == 10:
-        return [
-            DEFAULT_ITEMS[10],
-            DEFAULT_ITEMS[11],
-            DEFAULT_ITEMS[12]
-        ]
-
-    # 其他情况默认返回耳机候选
-    return [
-        DEFAULT_ITEMS[1],
-        DEFAULT_ITEMS[2],
-        DEFAULT_ITEMS[3],
-        DEFAULT_ITEMS[4]
-    ]
-
-
-@app.get("/items/{item_id}")
-def get_item_detail(item_id: int, db: Session = Depends(get_db)):
-    default_item = get_default_item_by_id(item_id)
-    if default_item:
-        return default_item
-
-    post = get_post_by_id(db, item_id)
-    if not post:
-        raise HTTPException(status_code=404, detail="未找到物品")
-
-    item = map_post_to_item(post)
     return item
 
 
-# ================== user 接口 ==================
+@app.get("/posts/match")
+def get_post_match(post_id: int, sort_by: str = Query(default="similarity")):
+    return {
+        "data": items_match(post_id, sort_by),
+        "total": len(items_match(post_id, sort_by))
+    }
+
 
 @app.get("/user/items")
-def user_items(contact: str, db: Session = Depends(get_db)):
-    default_my_items = [
-        item for item in DEFAULT_ITEMS
+def user_items(contact: str):
+    return [
+        item for item in get_all_items()
         if item.get("contact") == contact
     ]
-
-    return default_my_items
 
 
 @app.get("/user/info")
@@ -622,248 +442,15 @@ def user_messages():
     ]
 
 
-# ================== 上传接口 ==================
-
-@app.post("/upload")
-def upload_image(file: UploadFile = File(...)):
-    ext = file.filename.split(".")[-1]
-    filename = f"{uuid.uuid4().hex}.{ext}"
-    file_path = os.path.join("uploads", filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return {
-        "message": "上传成功",
-        "filename": filename,
-        "image_url": f"/uploads/{filename}"
-    }
-
-
-# ================== 认领接口 ==================
-
 @app.post("/claims")
-def create_claim(claim: ClaimCreate):
+def create_claim(claim: dict):
     return {
         "message": "申请已提交",
-        "post_id": claim.post_id,
-        "claimer_contact": claim.claimer_contact,
+        "post_id": claim.get("post_id"),
+        "claimer_contact": claim.get("claimer_contact"),
         "status": "submitted"
     }
-    create_user,
-    login_user,
-    create_post,
-    get_posts,
-    get_post_by_id,
-    get_match_posts,
-    get_posts_by_contact,
-    get_my_match_posts
-)
-import os
-import shutil
-import uuid
 
-app = FastAPI()
-
-def map_post_to_item(post_dict):
-    images = post_dict.get("images") or []
-    image = images[0] if images else ""
-
-    sim = post_dict.get("similarity", 0)
-    similarity = int(sim * 100) if sim <= 1 else int(sim)
-
-    type_val = post_dict.get("type")
-    status = "招领" if type_val == "found" else "寻物"
-
-    return {
-        "id": str(post_dict.get("id")),
-        "name": post_dict.get("title"),
-        "type": type_val,
-        "status": status,
-        "category": post_dict.get("category"),
-        "time": post_dict.get("time"),
-        "location": post_dict.get("location"),
-        "description": post_dict.get("description"),
-        "similarity": similarity,
-        "image": image,
-        "images": images,
-        "contact": post_dict.get("contact")
-    }
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-Base.metadata.create_all(bind=engine)
-
-if not os.path.exists("uploads"):
-    os.makedirs("uploads")
-
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-@app.get("/")
-def read_root():
-    return {"message": "后端启动成功"}
-
-@app.post("/register")
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    return create_user(db, user)
-
-@app.post("/login")
-def login(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = login_user(db, user)
-    if not db_user:
-        raise HTTPException(status_code=401, detail="用户名或密码错误")
-    return {
-        "message": "登录成功",
-        "user_id": db_user.id,
-        "username": db_user.username
-    }
-
-@app.post("/posts")
-def add_post(post: PostCreate, db: Session = Depends(get_db)):
-    return create_post(db, post)
-
-@app.get("/posts")
-def list_posts(
-    type: str = Query(default=None),
-    category: str = Query(default=None),
-    location: str = Query(default=None),
-    time_range: str = Query(default=None),
-    keyword: str = Query(default=None),
-    db: Session = Depends(get_db)
-):
-    return get_posts(
-        db,
-        type=type,
-        category=category,
-        location=location,
-        time_range=time_range,
-        keyword=keyword
-    )
-
-@app.get("/posts/match")
-def get_post_match(
-    post_id: int,
-    time_range: str = Query(default=None),
-    category: str = Query(default=None),
-    location: str = Query(default=None),
-    sort_by: str = Query(default="similarity"),
-    db: Session = Depends(get_db)
-):
-    result = get_match_posts(
-    db=db,
-    post_id=post_id,
-    time_range=time_range,
-    category=category,
-    location=location,
-    sort_by=sort_by
-)
-    if result is None:
-        raise HTTPException(status_code=404, detail="原始帖子不存在")
-    return result
-
-@app.get("/posts/my")
-def get_my_posts(contact: str, db: Session = Depends(get_db)):
-    return get_posts_by_contact(db, contact)
-
-@app.get("/posts/my/match")
-def get_my_matches(contact: str, db: Session = Depends(get_db)):
-    return get_my_match_posts(db, contact)
-
-@app.get("/posts/{post_id}")
-def get_post_detail(post_id: int, db: Session = Depends(get_db)):
-    post = get_post_by_id(db, post_id)
-    if not post:
-        raise HTTPException(status_code=404, detail="帖子不存在")
-    return post
-
-# ================== items接口 ==================
-
-@app.get("/items/recommend")
-def items_recommend(db: Session = Depends(get_db)):
-    posts = get_posts(db)
-    return [map_post_to_item(p) for p in posts[:5]]
-
-
-@app.post("/items/publish")
-def publish_item(item: dict, db: Session = Depends(get_db)):
-    data = {
-        "title": item.get("name"),
-        "type": item.get("type"),
-        "category": item.get("category"),
-        "time": item.get("time"),
-        "location": item.get("location"),
-        "description": item.get("description"),
-        "images": item.get("images", []),
-        "contact": item.get("contact")
-    }
-
-    new_post = create_post(db, data)
-    return map_post_to_item(new_post)
-
-
-@app.get("/items/match")
-def items_match(itemId: int, sort_by: str = Query(default="similarity"), db: Session = Depends(get_db)):
-    match_result = get_match_posts(db=db, post_id=itemId, sort_by=sort_by)
-
-    if match_result is None:
-        raise HTTPException(status_code=404, detail="物品不存在")
-
-    return [map_post_to_item(p) for p in match_result["data"]]
-
-
-@app.get("/items/{item_id}")
-def get_item_detail(item_id: int, db: Session = Depends(get_db)):
-    post = get_post_by_id(db, item_id)
-    if not post:
-        raise HTTPException(status_code=404, detail="未找到物品")
-
-    item = map_post_to_item(post)
-    return item
-
-
-# ================== user接口 ==================
-
-@app.get("/user/items")
-def user_items(contact: str, db: Session = Depends(get_db)):
-    posts = get_posts_by_contact(db, contact)
-    return [map_post_to_item(p) for p in posts]
-
-
-@app.get("/user/info")
-def user_info():
-    return {
-        "name": "用户",
-        "contact": "13800138000",
-        "avatar": "",
-        "publishCount": 3,
-        "matchCount": 2
-    }
-
-
-@app.get("/user/messages")
-def user_messages():
-    return [
-        {
-            "id": 1,
-            "title": "有新的匹配结果",
-            "content": "系统为你的物品找到了新的匹配信息",
-            "is_read": False,
-            "time": "2026-04-22 22:00:00"
-        }
-    ]
 
 @app.post("/upload")
 def upload_image(file: UploadFile = File(...)):
@@ -878,13 +465,4 @@ def upload_image(file: UploadFile = File(...)):
         "message": "上传成功",
         "filename": filename,
         "image_url": f"/uploads/{filename}"
-    }
-
-@app.post("/claims")
-def create_claim(claim: ClaimCreate):
-    return {
-        "messagex": "申请已提交",
-        "post_id": claim.post_id,
-        "claimer_contact": claim.claimer_contact,
-        "status": "submitted"
     }
